@@ -28,10 +28,10 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
-    val binding by lazy { ActivityMainBinding.inflate(layoutInflater)}
-    val bindingControl by lazy { ControlsBinding.inflate(layoutInflater)  }
+    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater)}
+    private val bindingControl by lazy { ControlsBinding.inflate(layoutInflater)  }
 
-    val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+    private val permission = Manifest.permission.READ_EXTERNAL_STORAGE
     val REQ_READ = 99
 
     val musicLists = mutableListOf<RoomMusic>()
@@ -61,8 +61,7 @@ class MainActivity : AppCompatActivity() {
     fun musicPlay() {
         var mediaPlayer:MediaPlayer? = null
         if(mediaPlayer != null) {
-            mediaPlayer?.release()
-            mediaPlayer = null
+            mediaPlayer.release()
         }
         mediaPlayer = MediaPlayer.create(binding.root.context, R.raw.pop_pop_pop)
         mediaPlayer?.start()
@@ -77,15 +76,17 @@ class MainActivity : AppCompatActivity() {
         musicDAO = helper.roomMusicDao()
         musicAdapter = MusicAdapter(musicLists)
 
+        binding.recyclerMemo.setHasFixedSize(true) // 이거 없으면 에러
+        // => E/RecyclerView: No adapter attached; skipping layout
         binding.progress.visibility = View.VISIBLE
         insertMusicList()
-        setTitle("곡수 : $i")
         CoroutineScope(Dispatchers.IO).launch {
             musicAdapter.musicList.clear()
             musicAdapter.musicList.addAll(musicDAO.getAll())
 
             withContext(Dispatchers.Main) { // 화면을 갱신할 때만 메인 쓰레드를 실행해
             //    musicAdapter.notifyDataSetChanged()  // 추가시 사용
+                title = "곡수 : ${musicAdapter.musicList.size}"
                 with(binding) {
                     Log.d("코루틴 빡 : ", "$i")
                     recyclerMemo.adapter = musicAdapter
